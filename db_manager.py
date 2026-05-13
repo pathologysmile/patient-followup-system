@@ -1,6 +1,7 @@
 import sqlite3
 from datetime import datetime, timedelta
 import logging
+import os
 
 # 导入日志配置
 try:
@@ -12,11 +13,58 @@ except ImportError:
     def log_database_operation(*args, **kwargs):
         pass
 
+# ============================================
+# 数据库配置 - 支持 SQLite 和 Supabase
+# ============================================
+
+# 检测是否使用 Supabase
+USE_SUPABASE = os.getenv("USE_SUPABASE", "false").lower() == "true"
+
+if USE_SUPABASE:
+    try:
+        from supabase import create_client, Client
+        
+        # 从环境变量获取 Supabase 配置
+        SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+        SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+        
+        if SUPABASE_URL and SUPABASE_KEY:
+            # 创建 Supabase 客户端
+            supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+            logger.info("✅ 已连接到 Supabase 数据库")
+        else:
+            logger.warning("⚠️  Supabase 配置不完整，回退到 SQLite")
+            USE_SUPABASE = False
+    except ImportError:
+        logger.warning("⚠️  未安装 Supabase SDK，回退到 SQLite")
+        logger.info("请运行: pip install supabase")
+        USE_SUPABASE = False
+
+# SQLite 配置
 DB_NAME = "patients.db"
+
+# 导入 Supabase 适配器（如果启用）
+supabase_adapter = None
+if USE_SUPABASE:
+    try:
+        from supabase_adapter import get_supabase_adapter
+        supabase_adapter = get_supabase_adapter()
+        logger.info("✅ Supabase 适配器已加载")
+    except Exception as e:
+        logger.error(f"❌ Supabase 适配器加载失败: {str(e)}")
+        USE_SUPABASE = False
 
 def init_db():
     """初始化数据库，创建患者表、回访计划表和提醒配置表"""
     logger.info("数据库初始化开始")
+    
+    if USE_SUPABASE:
+        # Supabase 不需要手动建表，已在 SQL Editor 中执行
+        logger.info("✅ Supabase 数据库已就绪（表结构需预先创建）")
+        log_database_operation('INIT', 'supabase', success=True)
+        return
+    
+    # SQLite 初始化
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     
@@ -115,6 +163,14 @@ def add_patient(name, gender, discharge_date, visit_dates, diagnosis, contact_pe
     hospital_number: 住院号（可选）
     """
     logger.info(f"添加患者 | 姓名: {name} | 住院号: {hospital_number or '无'}")
+    
+    if USE_SUPABASE and supabase_adapter:
+        return supabase_adapter.add_patient(
+            name, gender, discharge_date, visit_dates, diagnosis,
+            contact_person, contact_phone, hospital_number
+        )
+    
+    # SQLite 版本
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     
@@ -151,6 +207,10 @@ def add_patient(name, gender, discharge_date, visit_dates, diagnosis, contact_pe
 
 def get_due_patients():
     """查询今天需要回访的患者（不包括明天）"""
+    if USE_SUPABASE and supabase_adapter:
+        return supabase_adapter.get_due_patients()
+    
+    # SQLite 版本
     today = datetime.now().strftime('%Y-%m-%d')
     
     conn = sqlite3.connect(DB_NAME)
@@ -184,6 +244,10 @@ def get_due_patients():
 
 def get_all_patients():
     """获取所有患者数据及其回访计划"""
+    if USE_SUPABASE and supabase_adapter:
+        return supabase_adapter.get_all_patients()
+    
+    # SQLite 版本
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     
@@ -291,6 +355,10 @@ def import_patients_from_csv(csv_data):
     csv_data: list of dicts，每个dict包含患者信息
     返回: (success_count, error_count, errors_list)
     """
+    if USE_SUPABASE and supabase_adapter:
+        return supabase_adapter.import_patients_from_csv(csv_data)
+    
+    # SQLite 版本
     logger.info(f"CSV批量导入开始 | 记录数: {len(csv_data)}")
     success_count = 0
     error_count = 0
