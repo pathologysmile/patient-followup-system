@@ -39,11 +39,7 @@ def _create_chat_model(temperature=0.7):
         ChatTongyi 实例
     """
     if not DASHSCOPE_API_KEY:
-        raise ValueError(
-            "DASHSCOPE_API_KEY 未配置！\n"
-            "请在 Streamlit Cloud Secrets 中添加：\n"
-            "DASHSCOPE_API_KEY = \"sk-your-api-key\""
-        )
+        return None  # 返回 None 而不是抛出异常
     
     return ChatTongyi(
         model=DASHSCOPE_MODEL,
@@ -56,6 +52,10 @@ def generate_visit_script(patient_name, diagnosis, urgency):
     根据不同病情诊断给出专业的健康建议
     """
     llm = _create_chat_model(temperature=0.7)
+    
+    # 如果 API Key 未配置，返回提示
+    if llm is None:
+        return "⚠️ AI 功能暂未启用（API Key 未配置）\n请联系管理员配置 DASHSCOPE_API_KEY"
 
     # 根据诊断类型提供针对性的指导
     diagnosis_guidance = _get_diagnosis_guidance(diagnosis)
@@ -200,6 +200,10 @@ def chat_with_agent(message, history=None):
     """
     llm = _create_chat_model(temperature=0.7)
     
+    # 如果 API Key 未配置，返回提示
+    if llm is None:
+        return "⚠️ AI 功能暂未启用（API Key 未配置）\n请联系管理员配置 DASHSCOPE_API_KEY"
+    
     # 构建系统提示
     system_prompt = """你是一位专业的医疗助手，专门帮助医护人员进行患者回访工作。
     你可以：
@@ -243,6 +247,10 @@ def optimize_visit_script(patient_name, diagnosis, previous_feedback, original_s
         优化后的话术
     """
     llm = _create_chat_model(temperature=0.6)
+    
+    # 如果 API Key 未配置，返回提示
+    if llm is None:
+        return "⚠️ AI 功能暂未启用（API Key 未配置）\n请联系管理员配置 DASHSCOPE_API_KEY"
     
     prompt_template = """
     你是一位经验丰富的医疗沟通专家，擅长根据患者反馈优化回访话术。
@@ -296,6 +304,15 @@ def predict_recurrence_risk(diagnosis, patient_history, visit_records):
         风险评估结果（字典）
     """
     llm = _create_chat_model(temperature=0.3)
+    
+    # 如果 API Key 未配置，返回提示
+    if llm is None:
+        return {
+            "full_assessment": "⚠️ AI 功能暂未启用（API Key 未配置）\n请联系管理员配置 DASHSCOPE_API_KEY",
+            "risk_level": "未知",
+            "risk_score": 0,
+            "recommended_frequency": "常规随访"
+        }
     
     # 构建患者历史摘要
     history_summary = f"""
@@ -395,6 +412,10 @@ def recommend_visit_frequency(diagnosis, risk_assessment, patient_age=None):
     """
     llm = _create_chat_model(temperature=0.5)
     
+    # 如果 API Key 未配置，返回提示
+    if llm is None:
+        return "⚠️ AI 功能暂未启用（API Key 未配置）\n请联系管理员配置 DASHSCOPE_API_KEY"
+    
     prompt_template = """
     你是一位专业的慢病管理专家，擅长制定个性化的随访计划。
     
@@ -458,6 +479,10 @@ def learn_from_excellent_cases(case_description, key_points):
         学习总结和建议
     """
     llm = _create_chat_model(temperature=0.7)
+    
+    # 如果 API Key 未配置，返回提示
+    if llm is None:
+        return "⚠️ AI 功能暂未启用（API Key 未配置）\n请联系管理员配置 DASHSCOPE_API_KEY"
     
     prompt_template = """
     你是一位医疗质量管理专家，擅长从优秀案例中提取最佳实践。
