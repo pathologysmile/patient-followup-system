@@ -293,9 +293,17 @@ with st.sidebar:
     with st.form("add_patient_form"):
         col0, col1 = st.columns(2)
         with col0:
-            hospital_number = st.text_input("住院号")
+            hospital_number = st.text_input(
+                "住院号",
+                placeholder="例如：ZY20260510001",
+                help="可包含数字、字母和连字符"
+            )
         with col1:
-            name = st.text_input("患者姓名")
+            name = st.text_input(
+                "患者姓名",
+                placeholder="请输入姓名",
+                help="只能输入中文、英文和空格"
+            )
         
         col2, col3 = st.columns(2)
         with col2:
@@ -303,18 +311,58 @@ with st.sidebar:
         with col3:
             discharge_date = st.date_input("出院日期", value=datetime.now())
         
-        diagnosis = st.text_area("出院诊断")
+        diagnosis = st.text_area("出院诊断", placeholder="请输入出院诊断")
         
         col6, col7 = st.columns(2)
         with col6:
-            contact_person = st.text_input("联系人")
+            contact_person = st.text_input(
+                "联系人",
+                placeholder="请输入联系人姓名",
+                help="只能输入中文、英文和空格"
+            )
         with col7:
-            contact_phone = st.text_input("联系电话")
+            contact_phone = st.text_input(
+                "联系电话",
+                placeholder="例如：13800138000",
+                help="只能输入数字，11位手机号"
+            )
         
         submitted = st.form_submit_button("保存档案")
         
         if submitted:
-            if name and diagnosis and contact_person and contact_phone:
+            # 验证输入格式
+            validation_errors = []
+            
+            # 验证姓名（只能包含中文、英文、空格）
+            if name:
+                import re
+                if not re.match(r'^[\u4e00-\u9fa5a-zA-Z\s]+$', name):
+                    validation_errors.append("❌ 姓名只能包含中文、英文和空格")
+            
+            # 验证联系电话（只能输入数字，11位）
+            if contact_phone:
+                if not contact_phone.isdigit():
+                    validation_errors.append("❌ 联系电话只能输入数字")
+                elif len(contact_phone) != 11:
+                    validation_errors.append("❌ 联系电话必须是11位")
+                elif not contact_phone.startswith(('13', '14', '15', '16', '17', '18', '19')):
+                    validation_errors.append("❌ 联系电话格式不正确")
+            
+            # 验证住院号（只能包含数字、字母、连字符）
+            if hospital_number:
+                if not re.match(r'^[a-zA-Z0-9\-]+$', hospital_number):
+                    validation_errors.append("❌ 住院号只能包含数字、字母和连字符")
+            
+            # 验证联系人（只能包含中文、英文、空格）
+            if contact_person:
+                if not re.match(r'^[\u4e00-\u9fa5a-zA-Z\s]+$', contact_person):
+                    validation_errors.append("❌ 联系人姓名只能包含中文、英文和空格")
+            
+            # 如果有验证错误，显示错误信息
+            if validation_errors:
+                for error in validation_errors:
+                    st.error(error)
+            elif name and diagnosis and contact_person and contact_phone:
                 # 转换回访日期列表为字符串格式
                 visit_dates_str = [d.strftime('%Y-%m-%d') for d in st.session_state.visit_dates_list]
                 
