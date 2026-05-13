@@ -7,14 +7,21 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 # 加载 .env 文件中的配置
 load_dotenv()
 
+# 获取通义千问 API 配置
+DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY", "")
+DASHSCOPE_MODEL = os.getenv("DASHSCOPE_MODEL", "qwen-turbo")
+DASHSCOPE_BASE_URL = os.getenv("DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
+
 def generate_visit_script(patient_name, diagnosis, urgency):
     """
     利用通义千问生成针对性的回访话术
     根据不同病情诊断给出专业的健康建议
     """
     llm = ChatTongyi(
-        model_name="qwen-turbo",
-        temperature=0.7
+        model_name=DASHSCOPE_MODEL,
+        temperature=0.7,
+        dashscope_api_key=DASHSCOPE_API_KEY,
+        base_url=DASHSCOPE_BASE_URL
     )
 
     # 根据诊断类型提供针对性的指导
@@ -159,8 +166,10 @@ def chat_with_agent(message, history=None):
     与智能体进行对话
     """
     llm = ChatTongyi(
-        model_name="qwen-turbo",
-        temperature=0.7
+        model_name=DASHSCOPE_MODEL,
+        temperature=0.7,
+        dashscope_api_key=DASHSCOPE_API_KEY,
+        base_url=DASHSCOPE_BASE_URL
     )
     
     # 构建系统提示
@@ -206,8 +215,10 @@ def optimize_visit_script(patient_name, diagnosis, previous_feedback, original_s
         优化后的话术
     """
     llm = ChatTongyi(
-        model_name="qwen-turbo",
-        temperature=0.6  # 降低温度以获得更稳定的输出
+        model_name=DASHSCOPE_MODEL,
+        temperature=0.6,  # 降低温度以获得更稳定的输出
+        dashscope_api_key=DASHSCOPE_API_KEY,
+        base_url=DASHSCOPE_BASE_URL
     )
     
     prompt_template = """
@@ -262,8 +273,10 @@ def predict_recurrence_risk(diagnosis, patient_history, visit_records):
         风险评估结果（字典）
     """
     llm = ChatTongyi(
-        model_name="qwen-turbo",
-        temperature=0.3  # 低温度以获得更准确的评估
+        model_name=DASHSCOPE_MODEL,
+        temperature=0.3,  # 低温度以获得更准确的评估
+        dashscope_api_key=DASHSCOPE_API_KEY,
+        base_url=DASHSCOPE_BASE_URL
     )
     
     # 构建患者历史摘要
@@ -363,8 +376,10 @@ def recommend_visit_frequency(diagnosis, risk_assessment, patient_age=None):
         回访频率建议
     """
     llm = ChatTongyi(
-        model_name="qwen-turbo",
-        temperature=0.5
+        model_name=DASHSCOPE_MODEL,
+        temperature=0.5,
+        dashscope_api_key=DASHSCOPE_API_KEY,
+        base_url=DASHSCOPE_BASE_URL
     )
     
     prompt_template = """
@@ -430,8 +445,10 @@ def learn_from_excellent_cases(case_description, key_points):
         学习总结和建议
     """
     llm = ChatTongyi(
-        model_name="qwen-turbo",
-        temperature=0.7
+        model_name=DASHSCOPE_MODEL,
+        temperature=0.7,
+        dashscope_api_key=DASHSCOPE_API_KEY,
+        base_url=DASHSCOPE_BASE_URL
     )
     
     prompt_template = """
