@@ -18,15 +18,44 @@ if DASHSCOPE_API_KEY:
 if DASHSCOPE_BASE_URL:
     os.environ["DASHSCOPE_BASE_URL"] = DASHSCOPE_BASE_URL
 
+# 调试信息：检查环境变量是否正确设置
+if not DASHSCOPE_API_KEY:
+    print("⚠️  警告: DASHSCOPE_API_KEY 未设置！")
+    print("请在 Streamlit Cloud Secrets 或 .env 文件中配置 API Key")
+else:
+    print(f"✅ DASHSCOPE_API_KEY 已配置 (长度: {len(DASHSCOPE_API_KEY)})")
+    print(f"✅ DASHSCOPE_MODEL: {DASHSCOPE_MODEL}")
+    print(f"✅ DASHSCOPE_BASE_URL: {DASHSCOPE_BASE_URL}")
+
+
+def _create_chat_model(temperature=0.7):
+    """
+    安全地创建 ChatTongyi 实例
+    
+    参数:
+        temperature: 温度参数
+    
+    返回:
+        ChatTongyi 实例
+    """
+    if not DASHSCOPE_API_KEY:
+        raise ValueError(
+            "DASHSCOPE_API_KEY 未配置！\n"
+            "请在 Streamlit Cloud Secrets 中添加：\n"
+            "DASHSCOPE_API_KEY = \"sk-your-api-key\""
+        )
+    
+    return ChatTongyi(
+        model=DASHSCOPE_MODEL,
+        temperature=temperature
+    )
+
 def generate_visit_script(patient_name, diagnosis, urgency):
     """
     利用通义千问生成针对性的回访话术
     根据不同病情诊断给出专业的健康建议
     """
-    llm = ChatTongyi(
-        model=DASHSCOPE_MODEL,
-        temperature=0.7
-    )
+    llm = _create_chat_model(temperature=0.7)
 
     # 根据诊断类型提供针对性的指导
     diagnosis_guidance = _get_diagnosis_guidance(diagnosis)
@@ -169,10 +198,7 @@ def chat_with_agent(message, history=None):
     """
     与智能体进行对话
     """
-    llm = ChatTongyi(
-        model=DASHSCOPE_MODEL,
-        temperature=0.7
-    )
+    llm = _create_chat_model(temperature=0.7)
     
     # 构建系统提示
     system_prompt = """你是一位专业的医疗助手，专门帮助医护人员进行患者回访工作。
@@ -216,10 +242,7 @@ def optimize_visit_script(patient_name, diagnosis, previous_feedback, original_s
     返回:
         优化后的话术
     """
-    llm = ChatTongyi(
-        model=DASHSCOPE_MODEL,
-        temperature=0.6  # 降低温度以获得更稳定的输出
-    )
+    llm = _create_chat_model(temperature=0.6)
     
     prompt_template = """
     你是一位经验丰富的医疗沟通专家，擅长根据患者反馈优化回访话术。
@@ -272,10 +295,7 @@ def predict_recurrence_risk(diagnosis, patient_history, visit_records):
     返回:
         风险评估结果（字典）
     """
-    llm = ChatTongyi(
-        model=DASHSCOPE_MODEL,
-        temperature=0.3  # 低温度以获得更准确的评估
-    )
+    llm = _create_chat_model(temperature=0.3)
     
     # 构建患者历史摘要
     history_summary = f"""
@@ -373,10 +393,7 @@ def recommend_visit_frequency(diagnosis, risk_assessment, patient_age=None):
     返回:
         回访频率建议
     """
-    llm = ChatTongyi(
-        model=DASHSCOPE_MODEL,
-        temperature=0.5
-    )
+    llm = _create_chat_model(temperature=0.5)
     
     prompt_template = """
     你是一位专业的慢病管理专家，擅长制定个性化的随访计划。
@@ -440,10 +457,7 @@ def learn_from_excellent_cases(case_description, key_points):
     返回:
         学习总结和建议
     """
-    llm = ChatTongyi(
-        model=DASHSCOPE_MODEL,
-        temperature=0.7
-    )
+    llm = _create_chat_model(temperature=0.7)
     
     prompt_template = """
     你是一位医疗质量管理专家，擅长从优秀案例中提取最佳实践。
