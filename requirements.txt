@@ -7,3 +7,4 @@ pandas==2.3.3
 pydantic==2.13.4
 requests==2.33.1
 openpyxl==3.1.5
+supabase==2.3.4
