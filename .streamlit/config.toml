@@ -1,0 +1,25 @@
+[server]
+# 服务器地址
+address = "0.0.0.0"
+# 端口号
+port = 8501
+# 无头模式（不自动打开浏览器）
+headless = true
+
+[browser]
+# 不自动打开浏览器
+serverAddress = "localhost"
+serverPort = 8501
+gatherUsageStats = false
+
+[theme]
+# 主题配置
+primaryColor = "#FF4B4B"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#262730"
+font = "sans serif"
+
+[logger]
+# 日志级别
+level = "info"
