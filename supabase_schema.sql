@@ -53,10 +53,12 @@ CREATE TABLE IF NOT EXISTS visit_records (
     plan_id INTEGER NOT NULL REFERENCES visit_plans(id) ON DELETE CASCADE,
     patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
     visit_date DATE,
-    content TEXT,
-    feedback TEXT,
+    record_content TEXT,
+    patient_feedback TEXT,
+    health_status TEXT,
+    medication_info TEXT,
     next_visit_date DATE,
-    created_by VARCHAR(100),
+    recorder VARCHAR(100),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -65,10 +67,12 @@ COMMENT ON COLUMN visit_records.id IS '记录ID（主键）';
 COMMENT ON COLUMN visit_records.plan_id IS '计划ID（外键）';
 COMMENT ON COLUMN visit_records.patient_id IS '患者ID（外键）';
 COMMENT ON COLUMN visit_records.visit_date IS '实际回访日期';
-COMMENT ON COLUMN visit_records.content IS '回访内容';
-COMMENT ON COLUMN visit_records.feedback IS '患者反馈';
+COMMENT ON COLUMN visit_records.record_content IS '回访内容';
+COMMENT ON COLUMN visit_records.patient_feedback IS '患者反馈';
+COMMENT ON COLUMN visit_records.health_status IS '健康状况';
+COMMENT ON COLUMN visit_records.medication_info IS '用药情况';
 COMMENT ON COLUMN visit_records.next_visit_date IS '下次回访日期';
-COMMENT ON COLUMN visit_records.created_by IS '创建人';
+COMMENT ON COLUMN visit_records.recorder IS '记录人';
 
 -- 4. 创建提醒配置表（支持多个配置项）
 CREATE TABLE IF NOT EXISTS reminder_settings (

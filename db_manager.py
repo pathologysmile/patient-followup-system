@@ -54,12 +54,22 @@ if USE_SUPABASE:
                     # 创建 Supabase 客户端
                     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
                     logger.info("✅ 已连接到 Supabase 数据库")
+                    
+                    # 测试连接：尝试查询表
+                    try:
+                        test_response = supabase.table("patients").select("id").limit(1).execute()
+                        logger.info("✅ Supabase 连接测试成功")
+                    except Exception as test_err:
+                        logger.warning(f"⚠️  Supabase 连接测试失败: {str(test_err)}")
+                        # 不设置为 False，让应用继续尝试
+                        
                 except Exception as e:
                     logger.error(f"❌ Supabase 连接失败: {str(e)}")
                     logger.warning("⚠️  回退到 SQLite 数据库")
                     USE_SUPABASE = False
         else:
             logger.warning("⚠️  Supabase 配置不完整，回退到 SQLite")
+            logger.info(f"📋 当前配置: URL={'已设置' if SUPABASE_URL else '未设置'}, Key={'已设置' if SUPABASE_KEY else '未设置'}")
             USE_SUPABASE = False
     except ImportError:
         logger.warning("⚠️  未安装 Supabase SDK，回退到 SQLite")
