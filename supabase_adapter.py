@@ -31,21 +31,25 @@ class SupabaseAdapter:
             from supabase import create_client, Client
             
             # 从环境变量或 Streamlit Secrets 获取配置
-            SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-            SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+            SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
+            SUPABASE_KEY = os.getenv("SUPABASE_KEY", "").strip()
             
             # 尝试从 Streamlit Secrets 读取
             if not SUPABASE_URL or not SUPABASE_KEY:
                 try:
                     import streamlit as st
                     if hasattr(st, 'secrets'):
-                        SUPABASE_URL = st.secrets.get("SUPABASE_URL", "")
-                        SUPABASE_KEY = st.secrets.get("SUPABASE_KEY", "")
+                        SUPABASE_URL = st.secrets.get("SUPABASE_URL", "").strip()
+                        SUPABASE_KEY = st.secrets.get("SUPABASE_KEY", "").strip()
                 except:
                     pass
             
             if not SUPABASE_URL or not SUPABASE_KEY:
                 raise ValueError("Supabase URL 和 Key 未配置")
+            
+            # 验证 URL 格式
+            if not SUPABASE_URL.startswith("https://"):
+                raise ValueError(f"SUPABASE_URL 格式错误，必须以 https:// 开头: {SUPABASE_URL}")
             
             self.client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
             logger.info("✅ Supabase 客户端初始化成功")

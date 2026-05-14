@@ -70,22 +70,28 @@ COMMENT ON COLUMN visit_records.feedback IS '患者反馈';
 COMMENT ON COLUMN visit_records.next_visit_date IS '下次回访日期';
 COMMENT ON COLUMN visit_records.created_by IS '创建人';
 
--- 4. 创建提醒配置表
+-- 4. 创建提醒配置表（支持多个配置项）
 CREATE TABLE IF NOT EXISTS reminder_settings (
     id SERIAL PRIMARY KEY,
-    days_before INTEGER DEFAULT 1 CHECK (days_before >= 0),
-    enabled BOOLEAN DEFAULT TRUE,
+    setting_key VARCHAR(100) UNIQUE NOT NULL,
+    setting_value TEXT NOT NULL,
+    description TEXT,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 COMMENT ON TABLE reminder_settings IS '提醒配置表';
-COMMENT ON COLUMN reminder_settings.days_before IS '提前天数';
-COMMENT ON COLUMN reminder_settings.enabled IS '是否启用';
+COMMENT ON COLUMN reminder_settings.setting_key IS '配置键名';
+COMMENT ON COLUMN reminder_settings.setting_value IS '配置值';
+COMMENT ON COLUMN reminder_settings.description IS '配置说明';
 
 -- 插入默认提醒配置
-INSERT INTO reminder_settings (days_before, enabled) 
-VALUES (1, TRUE)
-ON CONFLICT DO NOTHING;
+INSERT INTO reminder_settings (setting_key, setting_value, description) VALUES
+('advance_days', '0', '提前N天提醒（0表示当天提醒）'),
+('reminder_time', '09:00', '每天固定提醒时间（24小时制）'),
+('repeat_interval', '24', '重复提醒间隔（小时）'),
+('enable_advance_reminder', 'false', '是否启用提前提醒'),
+('enable_repeat_reminder', 'true', '是否启用重复提醒')
+ON CONFLICT (setting_key) DO NOTHING;
 
 -- 5. 创建索引（优化查询性能）
 CREATE INDEX IF NOT EXISTS idx_patients_name ON patients(name);
@@ -146,18 +152,6 @@ CREATE TRIGGER update_reminder_settings_updated_at
     BEFORE UPDATE ON reminder_settings 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
-
--- ============================================
--- 验证表创建
--- ============================================
--- 执行以下查询验证表是否创建成功：
--- SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';
-
--- 查看表结构：
--- \d patients
--- \d visit_plans
--- \d visit_records
--- \d reminder_settings
 
 -- ============================================
 -- 常用查询示例

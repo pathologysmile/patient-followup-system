@@ -18,26 +18,56 @@ except ImportError:
 # ============================================
 
 # 检测是否使用 Supabase
-USE_SUPABASE = os.getenv("USE_SUPABASE", "false").lower() == "true"
+# 在 Streamlit Cloud 中，需要从 st.secrets 读取配置
+def get_supabase_config():
+    """获取 Supabase 配置（支持 Streamlit Secrets 和环境变量）"""
+    try:
+        import streamlit as st
+        if hasattr(st, 'secrets'):
+            url = st.secrets.get("SUPABASE_URL", "").strip()
+            key = st.secrets.get("SUPABASE_KEY", "").strip()
+            use_supabase = st.secrets.get("USE_SUPABASE", "false").lower() == "true"
+            return use_supabase, url, key
+    except:
+        pass
+    
+    # 回退到环境变量（本地开发）
+    use_supabase = os.getenv("USE_SUPABASE", "false").lower() == "true"
+    url = os.getenv("SUPABASE_URL", "").strip()
+    key = os.getenv("SUPABASE_KEY", "").strip()
+    return use_supabase, url, key
+
+USE_SUPABASE, SUPABASE_URL, SUPABASE_KEY = get_supabase_config()
 
 if USE_SUPABASE:
     try:
         from supabase import create_client, Client
         
-        # 从环境变量获取 Supabase 配置
-        SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-        SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
-        
         if SUPABASE_URL and SUPABASE_KEY:
-            # 创建 Supabase 客户端
-            supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-            logger.info("✅ 已连接到 Supabase 数据库")
+            # 验证 URL 格式
+            if not SUPABASE_URL.startswith("https://"):
+                logger.warning(f"⚠️  SUPABASE_URL 格式错误: {SUPABASE_URL}")
+                logger.warning("⚠️  回退到 SQLite 数据库")
+                USE_SUPABASE = False
+            else:
+                try:
+                    # 创建 Supabase 客户端
+                    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+                    logger.info("✅ 已连接到 Supabase 数据库")
+                except Exception as e:
+                    logger.error(f"❌ Supabase 连接失败: {str(e)}")
+                    logger.warning("⚠️  回退到 SQLite 数据库")
+                    USE_SUPABASE = False
         else:
             logger.warning("⚠️  Supabase 配置不完整，回退到 SQLite")
             USE_SUPABASE = False
     except ImportError:
         logger.warning("⚠️  未安装 Supabase SDK，回退到 SQLite")
         logger.info("请运行: pip install supabase")
+        USE_SUPABASE = False
+    except Exception as e:
+        logger.error(f"❌ Supabase 初始化异常: {str(e)}")
+        logger.warning("⚠️  回退到 SQLite 数据库")
         USE_SUPABASE = False
 
 # SQLite 配置
