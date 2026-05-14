@@ -52,15 +52,28 @@ def _create_chat_model(temperature=0.7):
         temperature: 温度参数
     
     返回:
-        ChatTongyi 实例
+        ChatTongyi 实例或 None
     """
     if not DASHSCOPE_API_KEY:
         return None  # 返回 None 而不是抛出异常
     
-    return ChatTongyi(
-        model=DASHSCOPE_MODEL,
-        temperature=temperature
-    )
+    # 确保环境变量已设置（ChatTongyi 依赖环境变量）
+    os.environ["DASHSCOPE_API_KEY"] = DASHSCOPE_API_KEY
+    if DASHSCOPE_BASE_URL:
+        os.environ["DASHSCOPE_BASE_URL"] = DASHSCOPE_BASE_URL
+    
+    try:
+        return ChatTongyi(
+            model=DASHSCOPE_MODEL,
+            temperature=temperature
+        )
+    except ImportError as e:
+        # API Key 无效或缺失
+        logger.warning(f"ChatTongyi 初始化失败 (API Key 问题): {str(e)}")
+        return None
+    except Exception as e:
+        logger.error(f"ChatTongyi 初始化失败: {str(e)}")
+        return None
 
 def generate_visit_script(patient_name, diagnosis, urgency):
     """
