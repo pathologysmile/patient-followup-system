@@ -7,10 +7,26 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 # 加载 .env 文件中的配置
 load_dotenv()
 
-# 获取通义千问 API 配置并设置到环境变量（ChatTongyi 需要从环境变量读取）
-DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY", "")
-DASHSCOPE_MODEL = os.getenv("DASHSCOPE_MODEL", "qwen-turbo")
-DASHSCOPE_BASE_URL = os.getenv("DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
+# 获取通义千问 API 配置（支持 Streamlit Secrets 和环境变量）
+def get_dashscope_config():
+    """获取 DashScope 配置（优先从 Streamlit Secrets 读取）"""
+    try:
+        import streamlit as st
+        if hasattr(st, 'secrets'):
+            api_key = st.secrets.get("DASHSCOPE_API_KEY", "").strip()
+            model = st.secrets.get("DASHSCOPE_MODEL", "qwen-turbo").strip()
+            base_url = st.secrets.get("DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1").strip()
+            return api_key, model, base_url
+    except:
+        pass
+    
+    # 回退到环境变量（本地开发）
+    api_key = os.getenv("DASHSCOPE_API_KEY", "").strip()
+    model = os.getenv("DASHSCOPE_MODEL", "qwen-turbo").strip()
+    base_url = os.getenv("DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1").strip()
+    return api_key, model, base_url
+
+DASHSCOPE_API_KEY, DASHSCOPE_MODEL, DASHSCOPE_BASE_URL = get_dashscope_config()
 
 # 设置环境变量供 ChatTongyi 使用
 if DASHSCOPE_API_KEY:
