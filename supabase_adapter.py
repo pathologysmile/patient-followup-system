@@ -254,7 +254,10 @@ class SupabaseAdapter:
                 "visit_date": datetime.now().strftime("%Y-%m-%d"),
                 "record_content": content,
                 "patient_feedback": feedback,
-                "next_visit_date": next_visit_date
+                "health_status": None,  # 默认值
+                "medication_info": None,  # 默认值
+                "next_visit_date": next_visit_date,
+                "recorder": None  # 默认值
             }
             
             self.client.table("visit_records").insert(record_data).execute()
